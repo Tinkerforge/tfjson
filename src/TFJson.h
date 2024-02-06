@@ -766,7 +766,7 @@ bool TFJsonDeserializer::next(size_t *offset) {
     debugf("next() -> idx_cur: %zd, utf8_count: %zu, cur: '%c' [0x%02x]\n", idx_cur, utf8_count, cur, (uint8_t)cur);
 
     if (utf8_count > 0) {
-        if (((uint8_t)cur & 0b11000000) != 0b10000000) {
+        if (((uint8_t)cur & 0xC0) != 0x80) {
             okay(-1);
 
             reportError(Error::InvalidUTF8ContinuationByte);
