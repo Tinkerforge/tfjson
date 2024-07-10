@@ -35,6 +35,8 @@ struct TFJsonSerializer {
     void addMemberBoolean(const char *key, bool b);
     void addMemberNull(const char *key);
     void addMemberString(const char *key, const char *c);
+    void addMemberStringVF(const char *key, const char *fmt, va_list args);
+    [[gnu::format(__printf__, 3, 4)]] void addMemberStringF(const char *key, const char *fmt, ...);
     void addMemberArray(const char *key);
     void addMemberObject(const char *key);
 
@@ -52,6 +54,8 @@ struct TFJsonSerializer {
     void addBoolean(bool b);
     void addNull();
     void addString(const char *c, size_t len = TFJSON_USE_STRLEN, bool enquote = true);
+    void addStringVF(const char *fmt, va_list args);
+    [[gnu::format(__printf__, 2, 3)]] void addStringF(const char *fmt, ...);
     void addArray();
     void addObject();
 
@@ -62,10 +66,13 @@ struct TFJsonSerializer {
 
 private:
     void addKey(const char *key);
-    void write(const char *c, size_t len = TFJSON_USE_STRLEN);
-    void write(char c);
-    void writeUnescaped(const char *c, size_t len);
-    void writeFmt(const char *fmt, ...) __attribute__((__format__(__printf__, 2, 3)));
+    void writeEscaped(const char *c, size_t len = TFJSON_USE_STRLEN);
+    void writeEscapedVF(const char *fmt, va_list args);
+    [[gnu::format(__printf__, 2, 3)]] void writeEscapedF(const char *fmt, ...);
+    void writePlain(char c);
+    void writePlain(const char *c, size_t len);
+    void writePlainVF(const char *fmt, va_list args);
+    [[gnu::format(__printf__, 2, 3)]] void writePlainF(const char *fmt, ...);
 };
 
 struct TFJsonDeserializer {
@@ -205,8 +212,8 @@ static bool isctrl(char c) {
 #define debugf(...) (void)0
 #endif
 
-// Use this macro and pass length to writeUnescaped so that the compiler can see (and create constants of) the string literal lengths.
-#define WRITE_LITERAL(x) this->writeUnescaped((x), strlen((x)))
+// Use this macro and pass length to writePlain so that the compiler can see (and create constants of) the string literal lengths.
+#define WRITE_PLAIN_LITERAL(x) this->writePlain((x), strlen((x)))
 
 TFJsonSerializer::TFJsonSerializer(char *buf, size_t buf_size) : buf(buf), buf_size(buf_size), head(buf), buf_required(0) {}
 
@@ -275,53 +282,68 @@ void TFJsonSerializer::addMemberString(const char *key, const char *c) {
     this->addString(c);
 }
 
+void TFJsonSerializer::addMemberStringVF(const char *key, const char *fmt, va_list args) {
+    this->addKey(key);
+    this->addStringVF(fmt, args);
+}
+
+void TFJsonSerializer::addMemberStringF(const char *key, const char *fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    this->addMemberStringVF(key, fmt, args);
+    va_end(args);
+}
+
 void TFJsonSerializer::addMemberArray(const char *key) {
     this->addKey(key);
-    this->write('[');
+    this->writePlain('[');
 }
 
 void TFJsonSerializer::addMemberObject(const char *key) {
     this->addKey(key);
-    this->write('{');
+    this->writePlain('{');
 }
 
 void TFJsonSerializer::addNumber(uint64_t u, bool enquote) {
     if (!in_empty_container)
-        this->write(',');
+        this->writePlain(',');
 
     in_empty_container = false;
-    if (enquote)
-        this->write('"');
-
-    this->writeFmt("%" PRIu64, u);
 
     if (enquote)
-        this->write('"');
+        this->writePlain('"');
+
+    this->writePlainF("%" PRIu64, u);
+
+    if (enquote)
+        this->writePlain('"');
 }
 
 void TFJsonSerializer::addNumber(int64_t i) {
     if (!in_empty_container)
-        this->write(',');
+        this->writePlain(',');
 
     in_empty_container = false;
 
-    this->writeFmt("%" PRIi64, i);
+    this->writePlainF("%" PRIi64, i);
 }
 
 void TFJsonSerializer::addNumber(uint32_t u) {
     if (!in_empty_container)
-        this->write(',');
+        this->writePlain(',');
 
     in_empty_container = false;
-    this->writeFmt("%u", u);
+
+    this->writePlainF("%u", u);
 }
 
 void TFJsonSerializer::addNumber(int32_t i) {
     if (!in_empty_container)
-        this->write(',');
+        this->writePlain(',');
 
     in_empty_container = false;
-    this->writeFmt("%d", i);
+
+    this->writePlainF("%d", i);
 }
 
 void TFJsonSerializer::addNumber(uint16_t u) {
@@ -342,14 +364,14 @@ void TFJsonSerializer::addNumber(int8_t i) {
 
 void TFJsonSerializer::addNumber(double f) {
     if (!in_empty_container)
-        this->write(',');
+        this->writePlain(',');
 
     in_empty_container = false;
 
     if (isfinite(f))
-        this->writeFmt("%f", f);
+        this->writePlainF("%f", f);
     else
-        WRITE_LITERAL("null");
+        WRITE_PLAIN_LITERAL("null");
 }
 
 void TFJsonSerializer::addNumber(float f) {
@@ -358,75 +380,95 @@ void TFJsonSerializer::addNumber(float f) {
 
 void TFJsonSerializer::addBoolean(bool b) {
     if (!in_empty_container)
-        this->write(',');
+        this->writePlain(',');
 
     in_empty_container = false;
 
     if (b)
-        WRITE_LITERAL("true");
+        WRITE_PLAIN_LITERAL("true");
     else
-        WRITE_LITERAL("false");
+        WRITE_PLAIN_LITERAL("false");
 }
 
 void TFJsonSerializer::addNull() {
     if (!in_empty_container)
-        this->write(',');
+        this->writePlain(',');
 
     in_empty_container = false;
 
-    WRITE_LITERAL("null");
+    WRITE_PLAIN_LITERAL("null");
 }
 
 void TFJsonSerializer::addString(const char *c, size_t len, bool enquote) {
     if (!in_empty_container)
-        this->write(',');
+        this->writePlain(',');
 
     in_empty_container = false;
 
     if (enquote)
-        this->write('\"');
+        this->writePlain('\"');
 
-    this->write(c, len);
+    this->writeEscaped(c, len);
 
     if (enquote)
-        this->write('\"');
+        this->writePlain('\"');
+}
+
+void TFJsonSerializer::addStringVF(const char *fmt, va_list args) {
+    if (!in_empty_container)
+        this->writePlain(',');
+
+    in_empty_container = false;
+
+    this->writePlain('\"');
+    this->writeEscapedVF(fmt, args);
+    this->writePlain('\"');
+}
+
+void TFJsonSerializer::addStringF(const char *fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    this->addStringVF(fmt, args);
+    va_end(args);
 }
 
 void TFJsonSerializer::addArray() {
     if (!in_empty_container)
-        this->write(',');
+        this->writePlain(',');
 
     in_empty_container = true;
 
-    WRITE_LITERAL("[");
+    this->writePlain('[');
 }
 
 void TFJsonSerializer::addObject() {
     if (!in_empty_container)
-        this->write(',');
+        this->writePlain(',');
 
     in_empty_container = true;
 
-    WRITE_LITERAL("{");
+    this->writePlain('{');
 }
 
 void TFJsonSerializer::endArray() {
     in_empty_container = false;
 
-    WRITE_LITERAL("]");
+    this->writePlain(']');
 }
 
 void TFJsonSerializer::endObject() {
     in_empty_container = false;
 
-    WRITE_LITERAL("}");
+    this->writePlain('}');
 }
 
 size_t TFJsonSerializer::end() {
     // Return required buffer size _without_ the null terminator.
     // This mirrors the behaviour of snprintf.
     size_t result = buf_required;
-    this->write('\0');
+
+    this->writePlain('\0');
+
     if (buf_size > 0 && result >= buf_size)
         buf[buf_size - 1] = '\0';
 
@@ -435,13 +477,13 @@ size_t TFJsonSerializer::end() {
 
 void TFJsonSerializer::addKey(const char *key) {
     if (!in_empty_container)
-        this->write(",");
+        this->writePlain(',');
 
     in_empty_container = true;
 
-    this->write('\"');
-    this->write(key);
-    WRITE_LITERAL("\":");
+    this->writePlain('\"');
+    this->writeEscaped(key);
+    WRITE_PLAIN_LITERAL("\":");
 }
 
 /*
@@ -449,65 +491,83 @@ void TFJsonSerializer::addKey(const char *key) {
     be placed within the quotation marks except for the code points that must be escaped: quotation mark
     (U+0022), reverse solidus (U+005C), and the control characters U+0000 to U+001F.
 */
-void TFJsonSerializer::write(const char *c, size_t len) {
+void TFJsonSerializer::writeEscaped(const char *c, size_t len) {
     const char *end = c + (len == TFJSON_USE_STRLEN ? strlen(c) : len);
 
     while(c != end) {
         switch (*c) {
             case '\\':
-                write('\\');
-                write('\\');
+                writePlain('\\');
+                writePlain('\\');
                 break;
             case '"':
-                write('\\');
-                write('"');
+                writePlain('\\');
+                writePlain('"');
                 break;
             case '\b':
-                write('\\');
-                write('b');
+                writePlain('\\');
+                writePlain('b');
                 break;
             case '\f':
-                write('\\');
-                write('f');
+                writePlain('\\');
+                writePlain('f');
                 break;
             case '\n':
-                write('\\');
-                write('n');
+                writePlain('\\');
+                writePlain('n');
                 break;
             case '\r':
-                write('\\');
-                write('r');
+                writePlain('\\');
+                writePlain('r');
                 break;
             case '\t':
-                write('\\');
-                write('t');
+                writePlain('\\');
+                writePlain('t');
                 break;
             default:
                 if (isctrl(*c)) {
                     char x = *c;
 
-                    write('\\');
-                    write('u');
-                    write('0');
-                    write('0');
-                    write(x & 0x10 ? '1' : '0');
+                    writePlain('\\');
+                    writePlain('u');
+                    writePlain('0');
+                    writePlain('0');
+                    writePlain(x & 0x10 ? '1' : '0');
 
                     x &= 0x0F;
 
                     if (x >= 10)
-                        write('A' + (x - 10));
+                        writePlain('A' + (x - 10));
                     else
-                        write('0' + (x));
+                        writePlain('0' + (x));
                 }
-                else
-                    write(*c);
+                else {
+                    writePlain(*c);
+                }
+
                 break;
         }
         ++c;
     }
 }
 
-void TFJsonSerializer::write(char c) {
+void TFJsonSerializer::writeEscapedVF(const char *fmt, va_list args) {
+    char *tmp;
+    int tmp_len = vasprintf(&tmp, fmt, args); // FIXME: don't use vasprintf here, implement this without allocating extra memeory
+
+    if (tmp_len > 0) {
+        writeEscaped(tmp, tmp_len);
+    }
+}
+
+void TFJsonSerializer::writeEscapedF(const char *fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    writeEscapedVF(fmt, args);
+    va_end(args);
+}
+
+void TFJsonSerializer::writePlain(char c) {
     ++buf_required;
 
     if (buf_size == 0 || (size_t)(head - buf) > (buf_size - 1))
@@ -517,7 +577,7 @@ void TFJsonSerializer::write(char c) {
     ++head;
 }
 
-void TFJsonSerializer::writeUnescaped(const char *c, size_t len) {
+void TFJsonSerializer::writePlain(const char *c, size_t len) {
     buf_required += len;
 
     if (len > buf_size || (size_t)(head - buf) > (buf_size - len))
@@ -527,13 +587,9 @@ void TFJsonSerializer::writeUnescaped(const char *c, size_t len) {
     head += len;
 }
 
-void TFJsonSerializer::writeFmt(const char *fmt, ...) {
+void TFJsonSerializer::writePlainVF(const char *fmt, va_list args) {
     size_t buf_left = (head >= buf + buf_size) ? 0 : buf_size - (size_t)(head - buf);
-
-    va_list args;
-    va_start(args, fmt);
     int w = vsnprintf(head, buf_left, fmt, args);
-    va_end(args);
 
     if (w < 0) {
         // don't move head if vsnprintf fails completely.
@@ -553,7 +609,13 @@ void TFJsonSerializer::writeFmt(const char *fmt, ...) {
     }
 
     head += (size_t)w;
-    return;
+}
+
+void TFJsonSerializer::writePlainF(const char *fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    writePlainVF(fmt, args);
+    va_end(args);
 }
 
 TFJsonDeserializer::TFJsonDeserializer(size_t nesting_depth_max, size_t malloc_size_max, bool allow_null_in_string) :
