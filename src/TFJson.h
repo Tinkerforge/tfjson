@@ -22,6 +22,10 @@ struct TFJsonSerializer {
     // TFJsonSerializer::end() will return the required buffer size WITHOUT NULL TERMINATOR!
     TFJsonSerializer(char *buf, size_t buf_size);
 
+    // Disallow copying the serializer, because why would you?
+    TFJsonSerializer(const TFJsonSerializer&) = delete;
+    TFJsonSerializer &operator=(const TFJsonSerializer&) = delete;
+
     // Object
     void addMemberNumber(const char *key, uint64_t u);
     void addMemberNumber(const char *key, int64_t i);
@@ -137,6 +141,10 @@ struct TFJsonDeserializer {
     std::function<bool(void)> null_handler;
 
     TFJsonDeserializer(size_t nesting_depth_max, size_t malloc_size_max, bool allow_null_in_string = true);
+
+    // Disallow copying the deserializer, because why would you?
+    TFJsonDeserializer(const TFJsonDeserializer&) = delete;
+    TFJsonDeserializer &operator=(const TFJsonDeserializer&) = delete;
 
     static const char *getErrorName(Error error);
 
