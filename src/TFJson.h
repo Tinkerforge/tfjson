@@ -662,8 +662,8 @@ const char *TFJsonDeserializer::getErrorName(Error error) {
         case Error::OutOfMemory: return "OutOfMemory";
         case Error::ElementTooLong: return "ElementTooLong";
         case Error::RefillFailure: return "RefillFailure";
-        default: return "Unknown";
     }
+    return "Unknown";
 }
 
 void TFJsonDeserializer::setErrorHandler(std::function<void(Error, char *, size_t)> error_handler_) { error_handler = error_handler_; }
