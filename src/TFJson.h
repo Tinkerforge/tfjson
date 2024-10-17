@@ -1325,7 +1325,8 @@ bool TFJsonDeserializer::parseString(bool report_as_member) {
                 end -= offset;
             }
 
-            uint32_t code_point = strtoul(hex, nullptr, 16);
+            // Four hex digits can't encode a value > UINT32_MAX.
+            uint32_t code_point = (uint32_t) strtoul(hex, nullptr, 16);
 
             if (!allow_null_in_string && code_point == 0) {
                 reportError(Error::ForbiddenNullInString);
