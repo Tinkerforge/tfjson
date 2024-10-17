@@ -2,6 +2,7 @@
 #define TFJSON_H
 
 #include <stddef.h>
+#include <sys/types.h> // for ssize_t
 #include <stdint.h>
 #include <stdarg.h>
 #include <inttypes.h>
@@ -334,7 +335,7 @@ void TFJsonSerializer::addNumber(uint32_t u) {
 
     in_empty_container = false;
 
-    this->writePlainF("%u", u);
+    this->writePlainF("%" PRIu32, u);
 }
 
 void TFJsonSerializer::addNumber(int32_t i) {
@@ -343,7 +344,7 @@ void TFJsonSerializer::addNumber(int32_t i) {
 
     in_empty_container = false;
 
-    this->writePlainF("%d", i);
+    this->writePlainF("%" PRIi32, i);
 }
 
 void TFJsonSerializer::addNumber(uint16_t u) {
