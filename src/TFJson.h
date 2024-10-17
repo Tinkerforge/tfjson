@@ -40,7 +40,7 @@ struct TFJsonSerializer {
     void addMemberBoolean(const char *key, bool b);
     void addMemberNull(const char *key);
     void addMemberString(const char *key, const char *c);
-    void addMemberStringVF(const char *key, const char *fmt, va_list args);
+    [[gnu::format(__printf__, 3, 0)]] void addMemberStringVF(const char *key, const char *fmt, va_list args);
     [[gnu::format(__printf__, 3, 4)]] void addMemberStringF(const char *key, const char *fmt, ...);
     void addMemberArray(const char *key);
     void addMemberObject(const char *key);
@@ -59,7 +59,7 @@ struct TFJsonSerializer {
     void addBoolean(bool b);
     void addNull();
     void addString(const char *c, size_t len = TFJSON_USE_STRLEN, bool enquote = true);
-    void addStringVF(const char *fmt, va_list args);
+    [[gnu::format(__printf__, 2, 0)]] void addStringVF(const char *fmt, va_list args);
     [[gnu::format(__printf__, 2, 3)]] void addStringF(const char *fmt, ...);
     void addArray();
     void addObject();
@@ -72,11 +72,11 @@ struct TFJsonSerializer {
 private:
     void addKey(const char *key);
     void writeEscaped(const char *c, size_t len = TFJSON_USE_STRLEN);
-    void writeEscapedVF(const char *fmt, va_list args);
+    [[gnu::format(__printf__, 2, 0)]] void writeEscapedVF(const char *fmt, va_list args);
     [[gnu::format(__printf__, 2, 3)]] void writeEscapedF(const char *fmt, ...);
     void writePlain(char c);
     void writePlain(const char *c, size_t len);
-    void writePlainVF(const char *fmt, va_list args);
+    [[gnu::format(__printf__, 2, 0)]] void writePlainVF(const char *fmt, va_list args);
     [[gnu::format(__printf__, 2, 3)]] void writePlainF(const char *fmt, ...);
 };
 
