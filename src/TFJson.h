@@ -148,22 +148,22 @@ struct TFJsonDeserializer {
 
     static const char *getErrorName(Error error);
 
-    void setErrorHandler(std::function<void(Error, char *, size_t)> error_handler);
-    void setRefillHandler(std::function<ssize_t(char *, size_t)> refill_handler);
-    void setBeginHandler(std::function<bool(void)> begin_handler);
-    void setEndHandler(std::function<bool(void)> end_handler);
-    void setObjectBeginHandler(std::function<bool(void)> object_begin_handler);
-    void setObjectEndHandler(std::function<bool(void)> object_end_handler);
-    void setArrayBeginHandler(std::function<bool(void)> array_begin_handler);
-    void setArrayEndHandler(std::function<bool(void)> array_end_handler);
-    void setMemberHandler(std::function<bool(char *, size_t)> member_handler);
-    void setStringHandler(std::function<bool(char *, size_t)> string_handler);
-    void setDoubleHandler(std::function<bool(double)> double_handler);
-    void setInt64Handler(std::function<bool(int64_t)> int64_handler);
-    void setUInt64Handler(std::function<bool(uint64_t)> uint64_handler);
-    void setNumberHandler(std::function<bool(char *, size_t)> number_handler);
-    void setBooleanHandler(std::function<bool(bool)> boolean_handler);
-    void setNullHandler(std::function<bool(void)> null_handler);
+    void setErrorHandler(std::function<void(Error, char *, size_t)> &&error_handler);
+    void setRefillHandler(std::function<ssize_t(char *, size_t)> &&refill_handler);
+    void setBeginHandler(std::function<bool(void)> &&begin_handler);
+    void setEndHandler(std::function<bool(void)> &&end_handler);
+    void setObjectBeginHandler(std::function<bool(void)> &&object_begin_handler);
+    void setObjectEndHandler(std::function<bool(void)> &&object_end_handler);
+    void setArrayBeginHandler(std::function<bool(void)> &&array_begin_handler);
+    void setArrayEndHandler(std::function<bool(void)> &&array_end_handler);
+    void setMemberHandler(std::function<bool(char *, size_t)> &&member_handler);
+    void setStringHandler(std::function<bool(char *, size_t)> &&string_handler);
+    void setDoubleHandler(std::function<bool(double)> &&double_handler);
+    void setInt64Handler(std::function<bool(int64_t)> &&int64_handler);
+    void setUInt64Handler(std::function<bool(uint64_t)> &&uint64_handler);
+    void setNumberHandler(std::function<bool(char *, size_t)> &&number_handler);
+    void setBooleanHandler(std::function<bool(bool)> &&boolean_handler);
+    void setNullHandler(std::function<bool(void)> &&null_handler);
 
     bool parse(char *buf, size_t len = TFJSON_USE_STRLEN);
 
@@ -666,37 +666,37 @@ const char *TFJsonDeserializer::getErrorName(Error error) {
     return "Unknown";
 }
 
-void TFJsonDeserializer::setErrorHandler(std::function<void(Error, char *, size_t)> error_handler_) { error_handler = error_handler_; }
+void TFJsonDeserializer::setErrorHandler(std::function<void(Error, char *, size_t)> &&error_handler_) { error_handler = std::move(error_handler_); }
 
-void TFJsonDeserializer::setRefillHandler(std::function<ssize_t(char *, size_t)> refill_handler_) { refill_handler = refill_handler_; }
+void TFJsonDeserializer::setRefillHandler(std::function<ssize_t(char *, size_t)> &&refill_handler_) { refill_handler = std::move(refill_handler_); }
 
-void TFJsonDeserializer::setBeginHandler(std::function<bool(void)> begin_handler_) { begin_handler = begin_handler_; }
+void TFJsonDeserializer::setBeginHandler(std::function<bool(void)> &&begin_handler_) { begin_handler = std::move(begin_handler_); }
 
-void TFJsonDeserializer::setEndHandler(std::function<bool(void)> end_handler_) { end_handler = end_handler_; }
+void TFJsonDeserializer::setEndHandler(std::function<bool(void)> &&end_handler_) { end_handler = std::move(end_handler_); }
 
-void TFJsonDeserializer::setObjectBeginHandler(std::function<bool(void)> object_begin_handler_) { object_begin_handler = object_begin_handler_; }
+void TFJsonDeserializer::setObjectBeginHandler(std::function<bool(void)> &&object_begin_handler_) { object_begin_handler = std::move(object_begin_handler_); }
 
-void TFJsonDeserializer::setObjectEndHandler(std::function<bool(void)> object_end_handler_) { object_end_handler = object_end_handler_; }
+void TFJsonDeserializer::setObjectEndHandler(std::function<bool(void)> &&object_end_handler_) { object_end_handler = std::move(object_end_handler_); }
 
-void TFJsonDeserializer::setArrayBeginHandler(std::function<bool(void)> array_begin_handler_) { array_begin_handler = array_begin_handler_; }
+void TFJsonDeserializer::setArrayBeginHandler(std::function<bool(void)> &&array_begin_handler_) { array_begin_handler = std::move(array_begin_handler_); }
 
-void TFJsonDeserializer::setArrayEndHandler(std::function<bool(void)> array_end_handler_) { array_end_handler = array_end_handler_; }
+void TFJsonDeserializer::setArrayEndHandler(std::function<bool(void)> &&array_end_handler_) { array_end_handler = std::move(array_end_handler_); }
 
-void TFJsonDeserializer::setMemberHandler(std::function<bool(char *, size_t)> member_handler_) { member_handler = member_handler_; }
+void TFJsonDeserializer::setMemberHandler(std::function<bool(char *, size_t)> &&member_handler_) { member_handler = std::move(member_handler_); }
 
-void TFJsonDeserializer::setStringHandler(std::function<bool(char *, size_t)> string_handler_) { string_handler = string_handler_; }
+void TFJsonDeserializer::setStringHandler(std::function<bool(char *, size_t)> &&string_handler_) { string_handler = std::move(string_handler_); }
 
-void TFJsonDeserializer::setDoubleHandler(std::function<bool(double)> double_handler_) { double_handler = double_handler_; }
+void TFJsonDeserializer::setDoubleHandler(std::function<bool(double)> &&double_handler_) { double_handler = std::move(double_handler_); }
 
-void TFJsonDeserializer::setInt64Handler(std::function<bool(int64_t)> int64_handler_) { int64_handler = int64_handler_; }
+void TFJsonDeserializer::setInt64Handler(std::function<bool(int64_t)> &&int64_handler_) { int64_handler = std::move(int64_handler_); }
 
-void TFJsonDeserializer::setUInt64Handler(std::function<bool(uint64_t)> uint64_handler_) { uint64_handler = uint64_handler_; }
+void TFJsonDeserializer::setUInt64Handler(std::function<bool(uint64_t)> &&uint64_handler_) { uint64_handler = std::move(uint64_handler_); }
 
-void TFJsonDeserializer::setNumberHandler(std::function<bool(char *, size_t)> number_handler_) { number_handler = number_handler_; }
+void TFJsonDeserializer::setNumberHandler(std::function<bool(char *, size_t)> &&number_handler_) { number_handler = std::move(number_handler_); }
 
-void TFJsonDeserializer::setBooleanHandler(std::function<bool(bool)> boolean_handler_) { boolean_handler = boolean_handler_; }
+void TFJsonDeserializer::setBooleanHandler(std::function<bool(bool)> &&boolean_handler_) { boolean_handler = std::move(boolean_handler_); }
 
-void TFJsonDeserializer::setNullHandler(std::function<bool(void)> null_handler_) { null_handler = null_handler_; }
+void TFJsonDeserializer::setNullHandler(std::function<bool(void)> &&null_handler_) { null_handler = std::move(null_handler_); }
 
 bool TFJsonDeserializer::parse(char *buf_, size_t buf_len_) {
     nesting_depth = 0;
